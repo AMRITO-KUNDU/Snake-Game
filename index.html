@@ -64,6 +64,7 @@
 </head>
 <body>
     <!-- Sound effects -->
+    <audio id="moveSound" src="move-sound.mp3"></audio>
     <audio id="eatSound" src="eat-sound.mp3"></audio>
     <audio id="gameOverSound" src="game-over-sound.mp3"></audio>
 
@@ -78,6 +79,7 @@
         <label>Background Color: <input type="color" id="bgColor" value="#f0f0f0"></label>
         <button id="startCustomizedGame">Start Game</button>
     </div>
+    
     <div id="gameOverMenu" style="display:none;">
         <h1>Game Over!</h1>
         <p>Your final score: <span id="finalScore"></span></p>
@@ -101,20 +103,22 @@
         let isGameOver;
         let touchStartX;
         let touchStartY;
+        let bonusFood;
+        let foodsEaten = 0;
 
         // Customization options
         let snakeColor = "#2ecc71";
         let foodColor = "#e74c3c";
         let bgColor = "#f0f0f0";
+        let bonusFoodColor = "#3498db"; // Bonus food color set to blue
 
         // Sound effects
         const moveSound = new Audio("move-sound.mp3");
         const eatSound = new Audio("eat-sound.mp3");
         const gameOverSound = new Audio("game-over-sound.mp3");
 
-        
         function initializeGame() {
-            snake = [{ x: 10, y: 10 }];
+            snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }]; // Initialize snake with two segments
             direction = "right";
             food = generateFood();
             score = 0;
@@ -138,20 +142,20 @@
             ctx.fillStyle = snakeColor;
             snake.forEach(segment => {
                 ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize, tileSize);
-                ctx.shadowBlur = 5;
-                ctx.shadowColor = snakeColor;
             });
 
-            // Draw food
+            // Draw food (round shape)
             ctx.fillStyle = foodColor;
             ctx.beginPath();
-            ctx.arc((food.x + 0.5) * tileSize, (food.y + 0.5) * tileSize, tileSize / 2, 0, 2 * Math.PI);
+            ctx.arc((food.x * tileSize) + (tileSize / 2), (food.y * tileSize) + (tileSize / 2), tileSize / 2, 0, 2 * Math.PI);
             ctx.fill();
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = foodColor;
+            // Draw bonus food if exists
+            if (bonusFood) {
+                ctx.fillStyle = bonusFoodColor;
+                ctx.fillRect(bonusFood.x * tileSize, bonusFood.y * tileSize, tileSize, tileSize);
+            }
 
             // Draw score
-            ctx.shadowBlur = 0;
             ctx.fillStyle = "#333";
             ctx.font = "20px Arial";
             ctx.fillText("Score: " + score, 10, 30);
@@ -195,10 +199,17 @@
             if (head.x === food.x && head.y === food.y) {
                 score++;
                 eatSound.play(); // Play eat sound
-                snake.unshift(food);
+                snake.unshift(head);
                 food = generateFood();
+                foodsEaten++;
+
+                // Check if it's time to generate a bonus food
+                if (foodsEaten >= 30 && foodsEaten % 30 === 0) {
+                    generateBonusFood();
+                }
+
                 // Increase snake speed gradually
-                if (score % 5 === 0 && snakeSpeed < 20) {
+                if (score % 10 === 0 && snakeSpeed < 20) {
                     snakeSpeed++;
                     clearInterval(gameInterval);
                     startGameInterval();
@@ -207,6 +218,11 @@
                 // Move the snake by adding a new head and removing the tail
                 snake.unshift(head);
                 snake.pop();
+            }
+
+            // Check if snake eats bonus food
+            if (checkCollisionWithBonusFood()) {
+                handleBonusFoodCollision();
             }
         }
 
@@ -222,8 +238,30 @@
             return foodPosition;
         }
 
+        function generateBonusFood() {
+            bonusFood = generateFood();
+            setTimeout(() => {
+                bonusFood = null;
+            }, 10000); // 10 seconds
+        }
+
         function checkCollision(point, array) {
             return array.some(segment => segment.x === point.x && segment.y === point.y);
+        }
+
+        function checkCollisionWithBonusFood() {
+            if (!bonusFood) return false;
+            return bonusFood.x === snake[0].x && bonusFood.y === snake[0].y;
+        }
+
+        function handleBonusFoodCollision() {
+            for (let i = 0; i < 10; i++) {
+                snake.push({ ...snake[snake.length - 1] });
+            }
+            score += 10;
+            // Set color of bonus food to blue
+            bonusFoodColor = "#3498db";
+            bonusFood = null;
         }
 
         function startGameInterval() {
@@ -255,46 +293,44 @@
             clearInterval(gameInterval);
             isGameOver = true;
             isPaused = false;
-         // Delay showing game over menu by one second
             setTimeout(() => {
-              document.getElementById("gameOverMenu").style.display = "flex";
-              document.getElementById("snakeCanvas").style.display = "none";
-              document.getElementById("finalScore").textContent = score;
-            }, 300); //DELAY OF 300 MICROSECONDS
-            }
-
+                document.getElementById("gameOverMenu").style.display = "flex";
+                document.getElementById("snakeCanvas").style.display = "none";
+                document.getElementById("finalScore").textContent = score;
+            }, 300);
+        }
 
         function restartGame() {
-            initializeGame();
-            document.getElementById("gameOverMenu").style.display = "none";
-            startGame();
-        }
-    // Event listeners for user input
+          initializeGame();
+          // Reset foodsEaten count
+          foodsEaten = 0;
+          document.getElementById("gameOverMenu").style.display = "none";
+          startGame();
+}
 
+
+        // Event listeners for user input
         document.getElementById("startButton").addEventListener("click", startGame);
         document.getElementById("startCustomizedGame").addEventListener("click", startCustomizedGame);
         document.getElementById("restartButton").addEventListener("click", restartGame);
 
-    // Color picker event listeners
-
+        // Color picker event listeners
         document.getElementById("snakeColor").addEventListener("input", event => {
             snakeColor = event.target.value;
             // Snake color change logic
         });
 
-        
         document.getElementById("foodColor").addEventListener("input", event => {
             foodColor = event.target.value;
             // Food color change logic
         });
-
 
         document.getElementById("bgColor").addEventListener("input", event => {
             bgColor = event.target.value;
             // Background color change logic
         });
 
-    // Event listeners for keyboard and touch input
+        // Event listeners for keyboard and touch input
         document.addEventListener("keydown", handleKeyDown);
         canvas.addEventListener("touchstart", handleTouchStart);
         canvas.addEventListener("touchmove", handleTouchMove);
@@ -316,8 +352,8 @@
                 keyDown = false;
             }
         });
-        
-    // Function to handle keyboard input
+
+        // Function to handle keyboard input
         function handleKeyDown(event) {
             if (event.key === "ArrowUp" && direction !== "down") direction = "up";
             else if (event.key === "ArrowDown" && direction !== "up") direction = "down";
@@ -341,7 +377,6 @@
 
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
-            
 
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 // Horizontal swipe
@@ -359,4 +394,3 @@
     </script>
 </body>
 </html>
-<canvas id="snakeCanvas" width="420" height="420"></canvas>
