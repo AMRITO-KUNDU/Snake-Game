@@ -64,7 +64,6 @@
 </head>
 <body>
     <!-- Sound effects -->
-    <audio id="moveSound" src="move-sound.mp3"></audio>
     <audio id="eatSound" src="eat-sound.mp3"></audio>
     <audio id="gameOverSound" src="game-over-sound.mp3"></audio>
 
@@ -72,7 +71,7 @@
         <h1>Snake Game</h1>
         <button id="startButton">Start Game</button>
     </div>
-    <canvas id="snakeCanvas" width="400" height="400"></canvas>
+    <canvas id="snakeCanvas" width="501" height="501"></canvas>
     <div id="customizationMenu">
         <label>Snake Color: <input type="color" id="snakeColor" value="#2ecc71"></label>
         <label>Food Color: <input type="color" id="foodColor" value="#e74c3c"></label>
@@ -118,13 +117,13 @@
         const gameOverSound = new Audio("game-over-sound.mp3");
 
         function initializeGame() {
-            snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }]; // Initialize snake with two segments
+            snake = [{ x: 10, y: 10 }, { x: 10, y: 10 }]; // Initialize snake with two segments
             direction = "right";
             food = generateFood();
             score = 0;
             isGameOver = false;
             isPaused = false;
-            snakeSpeed = 8.5; // Initial snake speed
+            snakeSpeed = 9.5; // Initial snake speed
             document.getElementById("gameOverMenu").style.display = "none";
             document.getElementById("startMenu").style.display = "flex";
             document.getElementById("customizationMenu").style.display = "none";
@@ -149,6 +148,7 @@
             ctx.beginPath();
             ctx.arc((food.x * tileSize) + (tileSize / 2), (food.y * tileSize) + (tileSize / 2), tileSize / 2, 0, 2 * Math.PI);
             ctx.fill();
+            
             // Draw bonus food if exists
             if (bonusFood) {
                 ctx.fillStyle = bonusFoodColor;
