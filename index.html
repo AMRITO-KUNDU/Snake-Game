@@ -152,8 +152,18 @@
             // Draw bonus food if exists
             if (bonusFood) {
                 ctx.fillStyle = bonusFoodColor;
-                ctx.fillRect(bonusFood.x * tileSize, bonusFood.y * tileSize, tileSize, tileSize);
+                drawHexagon((bonusFood.x * tileSize) + (tileSize / 2), (bonusFood.y * tileSize) + (tileSize / 2), tileSize / 2);
+                ctx.fill();
             }
+
+           // Function to draw a hexagon
+         function drawHexagon(x, y, radius) {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+            ctx.lineTo(x + radius * Math.cos(i * Math.PI / 3), y + radius * Math.sin(i * Math.PI / 3));
+            }
+            ctx.closePath();
+        }
 
             // Draw score
             ctx.fillStyle = "#333";
