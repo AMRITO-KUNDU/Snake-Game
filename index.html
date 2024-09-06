@@ -5,382 +5,234 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snake Game</title>
     <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+        body, html {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f0f0;
-        }
-        canvas {
-            touch-action: none;
-            border: 1px solid #ccc;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: none;
-        }
-        button {
-            margin-top: 10px;
-            font-size: 16px;
-            padding: 10px;
-            background-color: #3498db;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #startMenu, #gameOverMenu, #customizationMenu {
-            text-align: center;
-            background-color: #3498db;
-            padding: 20px;
-            border-radius: 10px;
-            color: #fff;
+            padding: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        #customizationMenu {
-            display: none;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-        input[type="color"] {
-            width: 50px;
-            height: 30px;
-            margin: 10px;
+            height: 100%;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
 
-        /* Media queries for mobile responsiveness */
-        @media only screen and (max-width: 600px) {
-            canvas {
-                width: 80vw;
-                height: 80vw;
-            }
+        canvas {
+            border: 5px solid #ffffff;
+            border-radius: 15px;
+            background-color: #111;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 20px;
+            color: #ffffff;
+            font-size: 48px;
+            font-weight: bold;
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            animation: fadeIn 1s ease-out;
+            cursor: pointer;
+        }
+
+        #gameOver span {
+            display: block;
+            margin-top: 20px;
+            font-size: 24px;
+            color: #ff5555;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 <body>
-    <!-- Sound effects -->
-    <audio id="eatSound" src="eat-sound.mp3"></audio>
-    <audio id="gameOverSound" src="game-over-sound.mp3"></audio>
-    <audio id="bonusfoodSound" src="bonus-food-sound.wav"></audio>
-
-    <div id="startMenu">
-        <h1>Snake Game</h1>
-        <button id="startButton">Start Game</button>
-    </div>
-
-    <canvas id="snakeCanvas" width="501" height="501"></canvas>
-
-    <div id="customizationMenu">
-        <label>Snake Color: <input type="color" id="snakeColor" value="#2ecc71"></label>
-        <label>Food Color: <input type="color" id="foodColor" value="#e74c3c"></label>
-        <label>Background Color: <input type="color" id="bgColor" value="#f0f0f0"></label>
-        <button id="startCustomizedGame">Start Game</button>
-    </div>
-    
-    <div id="gameOverMenu" style="display:none;">
-        <h1>Game Over!</h1>
-        <p>Your final score: <span id="finalScore"></span></p>
-        <p>Well played! Want to try again?</p>
-        <button id="restartButton">Restart Game</button>
-    </div>
-
+    <div id="score">Score: 0</div>
+    <div id="gameOver">Game Over<br><span>Tap to Restart</span></div>
+    <canvas id="gameCanvas"></canvas>
     <script>
-        // Snake game script
-        const canvas = document.getElementById("snakeCanvas");
+        const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const gameOverElement = document.getElementById("gameOver");
 
-        const tileSize = 20;
+        let scale;
         let snake;
-        let direction;
         let food;
-        let score;
-        let snakeSpeed;
+        let score = 0;
         let gameInterval;
-        let isPaused;
-        let isGameOver;
-        let touchStartX;
-        let touchStartY;
-        let bonusFood;
-        let foodsEaten = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let gameSpeed = 100;
 
-        // Customization options
-        let snakeColor = "#2ecc71";
-        let foodColor = "#e74c3c";
-        let bgColor = "#f0f0f0";
-        let bonusFoodColor = "#3498db"; // Bonus food color set to blue
-
-        // Sound effects
-        const bonusfoodsound = new Audio("bonus-food-sound.wav");
-        const eatSound = new Audio("eat-sound.mp3");
-        const gameOverSound = new Audio("game-over-sound.mp3");
-
-        function initializeGame() {
-            snake = [{ x: 10, y: 10 }, { x: 10, y: 10 }]; // Initialize snake with two segments
-            direction = "right";
-            food = generateFood();
-            score = 0;
-            isGameOver = false;
-            isPaused = false;
-            snakeSpeed = 9.5; // Initial snake speed
-            document.getElementById("gameOverMenu").style.display = "none";
-            document.getElementById("startMenu").style.display = "flex";
-            document.getElementById("customizationMenu").style.display = "none";
+        function resizeCanvas() {
+            const minDimension = Math.min(window.innerWidth, window.innerHeight);
+            scale = Math.floor(minDimension / 30);
+            if (scale < 10) scale = 10;  // Set a minimum scale for very small screens
+            canvas.width = scale * 30;   // Limit the game grid size to 30x30 cells
+            canvas.height = scale * 30;
+            startGame();
         }
 
-        function draw() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw background
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw snake
-            ctx.fillStyle = snakeColor;
-            snake.forEach(segment => {
-                ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize, tileSize);
-            });
-
-            // Draw food (round shape)
-            ctx.fillStyle = foodColor;
-            ctx.beginPath();
-            ctx.arc((food.x * tileSize) + (tileSize / 2), (food.y * tileSize) + (tileSize / 2), tileSize / 2, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Draw bonus food if exists
-            if (bonusFood) {
-                ctx.fillStyle = bonusFoodColor;
-                drawHexagon((bonusFood.x * tileSize) + (tileSize / 2), (bonusFood.y * tileSize) + (tileSize / 2), tileSize / 2);
-                ctx.fill();
-            }
-
-           // Function to draw a hexagon
-         function drawHexagon(x, y, radius) {
-            ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-            ctx.lineTo(x + radius * Math.cos(i * Math.PI / 3), y + radius * Math.sin(i * Math.PI / 3));
-            }
-            ctx.closePath();
-        }
-
-            // Draw score
-            ctx.fillStyle = "#333";
-            ctx.font = "20px Arial";
-            ctx.fillText("Score: " + score, 10, 30);
-
-            if (isPaused) {
-                ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "#333";
-                ctx.font = "30px Arial";
-                ctx.fillText("Paused", canvas.width / 2 - 50, canvas.height / 2);
-            }
-        }
-
-        function update() {
-            if (isPaused || isGameOver) {
-                return;
-            }
-
-            const head = { ...snake[0] };
-
-            // Update snake's head position based on direction
-            if (direction === "up") head.y--;
-            else if (direction === "down") head.y++;
-            else if (direction === "left") head.x--;
-            else if (direction === "right") head.x++;
-
-            // Check for collisions with walls or itself
-            if (
-                head.x < 0 ||
-                head.y < 0 ||
-                head.x >= Math.floor(canvas.width / tileSize) ||
-                head.y >= Math.floor(canvas.height / tileSize) ||
-                checkCollision(head, snake.slice(1))
-            ) {
-                gameOverSound.play(); // Play game over sound
-                gameOver();
-                return;
-            }
-
-            // Check for collision with food
-            if (head.x === food.x && head.y === food.y) {
-                score++;
-                eatSound.play(); // Play eat sound
-                snake.unshift(head);
-                food = generateFood();
-                foodsEaten++;
-
-                // Check if it's time to generate a bonus food
-                if (foodsEaten >= 30 && foodsEaten % 30 === 0) {
-                    generateBonusFood();
-                }
-
-                // Increase snake speed gradually
-                if (score % 10 === 0 && snakeSpeed < 20) {
-                    snakeSpeed++;
-                    clearInterval(gameInterval);
-                    startGameInterval();
-                }
-            } else {
-                // Move the snake by adding a new head and removing the tail
-                snake.unshift(head);
-                snake.pop();
-            }
-
-            // Check if snake eats bonus food
-            if (checkCollisionWithBonusFood()) {
-                handleBonusFoodCollision();
-            }
-        }
-
-        function generateFood() {
-            let foodPosition;
-            do {
-                foodPosition = {
-                    x: Math.floor(Math.random() * (canvas.width / tileSize)),
-                    y: Math.floor(Math.random() * (canvas.height / tileSize))
-                };
-            } while (checkCollision(foodPosition, snake));
-
-            return foodPosition;
-        }
-
-        function generateBonusFood() {
-            bonusFood = generateFood();
-            setTimeout(() => {
-                bonusFood = null;
-            }, 10000); // 10 seconds
-        }
-
-        function checkCollision(point, array) {
-            return array.some(segment => segment.x === point.x && segment.y === point.y);
-        }
-
-        function checkCollisionWithBonusFood() {
-            if (!bonusFood) return false;
-            return bonusFood.x === snake[0].x && bonusFood.y === snake[0].y;
-        }
-
-        function handleBonusFoodCollision() {
-            for (let i = 0; i < 10; i++) {
-                snake.push({ ...snake[snake.length - 1] });
-            }
-            score += 10;
-            // Set color of bonus food to blue
-            bonusFoodColor = "#3498db";
-            bonusFood = null;
-            bonusfoodsound.volume = 0.5; // Adjust volume here
-            bonusfoodsound.play()
-        }
-
-        function startGameInterval() {
-            gameInterval = setInterval(function () {
-                draw();
-                update();
-            }, 1000 / snakeSpeed); // Adjust the divisor for the desired FPS
-        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         function startGame() {
-            initializeGame();
-            document.getElementById("startMenu").style.display = "none";
-            document.getElementById("customizationMenu").style.display = "flex";
+            clearInterval(gameInterval);
+            snake = new Snake();
+            food = new Food();
+            food.pickLocation();
+            score = 0;
+            gameSpeed = 100;
+            scoreElement.textContent = `Score: ${score}`;
+            gameOverElement.style.display = 'none';
+
+            gameInterval = window.setInterval(gameLoop, gameSpeed);
+
+            document.addEventListener('keydown', event => snake.changeDirection(event));
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
         }
 
-        function startCustomizedGame() {
-            document.getElementById("customizationMenu").style.display = "none";
-            document.getElementById("snakeCanvas").style.display = "block";
-            startGameInterval();
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            food.draw();
+            snake.update();
+            snake.draw();
+
+            if (snake.eat(food)) {
+                food.pickLocation();
+                score++;
+                scoreElement.textContent = `Score: ${score}`;
+                increaseSpeed();
+            }
+
+            if (snake.checkCollision() || snake.hitBoundary()) {
+                gameOver();
+            }
         }
 
-        function pauseGame() {
-            if (!isGameOver) {
-                isPaused = !isPaused;
+        function increaseSpeed() {
+            if (gameSpeed > 50) {
+                gameSpeed -= 2;
+                clearInterval(gameInterval);
+                gameInterval = window.setInterval(gameLoop, gameSpeed);
             }
         }
 
         function gameOver() {
             clearInterval(gameInterval);
-            isGameOver = true;
-            isPaused = false;
-            setTimeout(() => {
-                document.getElementById("gameOverMenu").style.display = "flex";
-                document.getElementById("snakeCanvas").style.display = "none";
-                document.getElementById("finalScore").textContent = score;
-            }, 300);
+            gameOverElement.style.display = 'block';
+            gameOverElement.addEventListener('click', restartGame, { once: true });
         }
 
         function restartGame() {
-          initializeGame();
-          // Reset foodsEaten count
-          foodsEaten = 0;
-          document.getElementById("gameOverMenu").style.display = "none";
-          startGame();
-}
+            startGame();
+        }
 
+        function Snake() {
+            this.x = 0;
+            this.y = 0;
+            this.xSpeed = scale;
+            this.ySpeed = 0;
+            this.total = 0;
+            this.tail = [];
 
-        // Event listeners for user input
-        document.getElementById("startButton").addEventListener("click", startGame);
-        document.getElementById("startCustomizedGame").addEventListener("click", startCustomizedGame);
-        document.getElementById("restartButton").addEventListener("click", restartGame);
+            this.draw = function() {
+                ctx.fillStyle = "#32cd32";
+                ctx.strokeStyle = "#ffffff";
 
-        // Color picker event listeners
-        document.getElementById("snakeColor").addEventListener("input", event => {
-            snakeColor = event.target.value;
-            // Snake color change logic
-        });
-
-        document.getElementById("foodColor").addEventListener("input", event => {
-            foodColor = event.target.value;
-            // Food color change logic
-        });
-
-        document.getElementById("bgColor").addEventListener("input", event => {
-            bgColor = event.target.value;
-            // Background color change logic
-        });
-
-        // Event listeners for keyboard and touch input
-        document.addEventListener("keydown", handleKeyDown);
-        canvas.addEventListener("touchstart", handleTouchStart);
-        canvas.addEventListener("touchmove", handleTouchMove);
-
-        // Handling continuous input
-        let keyDown = false;
-
-        document.addEventListener("keydown", event => {
-            if (event.key.startsWith("Arrow")) {
-                if (!keyDown) {
-                    keyDown = true;
-                    handleKeyDown(event);
+                for (let i = 0; i < this.tail.length; i++) {
+                    ctx.fillRect(this.tail[i].x, this.tail[i].y, scale, scale);
+                    ctx.strokeRect(this.tail[i].x, this.tail[i].y, scale, scale);
                 }
-            }
-        });
 
-        document.addEventListener("keyup", event => {
-            if (event.key.startsWith("Arrow")) {
-                keyDown = false;
-            }
-        });
+                ctx.fillRect(this.x, this.y, scale, scale);
+                ctx.strokeRect(this.x, this.y, scale, scale);
+            };
 
-        // Function to handle keyboard input
-        function handleKeyDown(event) {
-            if (event.key === "ArrowUp" && direction !== "down") direction = "up";
-            else if (event.key === "ArrowDown" && direction !== "up") direction = "down";
-            else if (event.key === "ArrowLeft" && direction !== "right") direction = "left";
-            else if (event.key === "ArrowRight" && direction !== "left") direction = "right";
-            else if (event.key === " ") pauseGame(); // Pause on spacebar
+            this.update = function() {
+                for (let i = 0; i < this.tail.length - 1; i++) {
+                    this.tail[i] = this.tail[i + 1];
+                }
+
+                if (this.total >= 1) {
+                    this.tail[this.total - 1] = { x: this.x, y: this.y };
+                }
+
+                this.x += this.xSpeed;
+                this.y += this.ySpeed;
+            };
+
+            this.changeDirection = function(event) {
+                if (event.keyCode === 37 && this.xSpeed === 0) {
+                    this.xSpeed = -scale;
+                    this.ySpeed = 0;
+                } else if (event.keyCode === 38 && this.ySpeed === 0) {
+                    this.ySpeed = -scale;
+                    this.xSpeed = 0;
+                } else if (event.keyCode === 39 && this.xSpeed === 0) {
+                    this.xSpeed = scale;
+                    this.ySpeed = 0;
+                } else if (event.keyCode === 40 && this.ySpeed === 0) {
+                    this.ySpeed = scale;
+                    this.xSpeed = 0;
+                }
+            };
+
+            this.eat = function(food) {
+                if (this.x === food.x && this.y === food.y) {
+                    this.total++;
+                    return true;
+                }
+                return false;
+            };
+
+            this.checkCollision = function() {
+                for (let i = 0; i < this.tail.length; i++) {
+                    if (this.x === this.tail[i].x && this.y === this.tail[i].y) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            this.hitBoundary = function() {
+                return this.x >= canvas.width || this.y >= canvas.height || this.x < 0 || this.y < 0;
+            };
         }
 
         function handleTouchStart(event) {
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
         }
 
         function handleTouchMove(event) {
@@ -391,21 +243,48 @@
             const touchEndX = event.touches[0].clientX;
             const touchEndY = event.touches[0].clientY;
 
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
 
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                // Horizontal swipe
-                if (deltaX > 0 && direction !== "left") direction = "right";
-                else if (deltaX < 0 && direction !== "right") direction = "left";
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 && snake.xSpeed === 0) {
+                    snake.xSpeed = scale;
+                    snake.ySpeed = 0;
+                } else if (diffX < 0 && snake.xSpeed === 0) {
+                    snake.xSpeed = -scale;
+                    snake.ySpeed = 0;
+                }
             } else {
-                // Vertical swipe
-                if (deltaY > 0 && direction !== "up") direction = "down";
-                else if (deltaY < 0 && direction !== "down") direction = "up";
+                if (diffY > 0 && snake.ySpeed === 0) {
+                    snake.ySpeed = scale;
+                    snake.xSpeed = 0;
+                } else if (diffY < 0 && snake.ySpeed === 0) {
+                    snake.ySpeed = -scale;
+                    snake.xSpeed = 0;
+                }
             }
 
             touchStartX = null;
             touchStartY = null;
+        }
+
+        function Food() {
+            this.x;
+            this.y;
+
+            this.pickLocation = function() {
+                this.x = Math.floor(Math.random() * Math.floor(canvas.width / scale)) * scale;
+                this.y = Math.floor(Math.random() * Math.floor(canvas.height / scale)) * scale;
+            };
+
+            this.draw = function() {
+                ctx.fillStyle = "#ff4444"; /* Red color for food */
+                ctx.strokeStyle = "#ffffff"; /* White border for better visibility */
+                ctx.beginPath();
+                ctx.arc(this.x + scale / 2, this.y + scale / 2, scale / 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            };
         }
     </script>
 </body>
