@@ -274,7 +274,9 @@
 
             this.draw = function() {
                 ctx.fillStyle = "#ff0000";  // Food is red
-                ctx.fillRect(this.x, this.y, scale, scale);  // No border
+                ctx.beginPath();
+                ctx.arc(this.x + scale / 2, this.y + scale / 2, scale / 2, 0, Math.PI * 2);  // Draw round food
+                ctx.fill();
             };
         }
     </script>
