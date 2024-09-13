@@ -141,7 +141,7 @@
 
         function increaseSpeed() {
             if (gameSpeed > 50) {
-                gameSpeed -= 2;
+                gameSpeed -= 1;  // Slower speed increase
                 clearInterval(gameInterval);
                 gameInterval = window.setInterval(gameLoop, gameSpeed);
             }
@@ -166,16 +166,11 @@
             this.tail = [];
 
             this.draw = function() {
-                ctx.fillStyle = "#32cd32";
-                ctx.strokeStyle = "#ffffff";
-
+                ctx.fillStyle = "#32cd32";  // Snake is green
                 for (let i = 0; i < this.tail.length; i++) {
-                    ctx.fillRect(this.tail[i].x, this.tail[i].y, scale, scale);
-                    ctx.strokeRect(this.tail[i].x, this.tail[i].y, scale, scale);
+                    ctx.fillRect(this.tail[i].x, this.tail[i].y, scale, scale);  // No border
                 }
-
                 ctx.fillRect(this.x, this.y, scale, scale);
-                ctx.strokeRect(this.x, this.y, scale, scale);
             };
 
             this.update = function() {
@@ -273,17 +268,13 @@
             this.y;
 
             this.pickLocation = function() {
-                this.x = Math.floor(Math.random() * Math.floor(canvas.width / scale)) * scale;
-                this.y = Math.floor(Math.random() * Math.floor(canvas.height / scale)) * scale;
+                this.x = Math.floor(Math.random() * 30) * scale;
+                this.y = Math.floor(Math.random() * 30) * scale;
             };
 
             this.draw = function() {
-                ctx.fillStyle = "#ff4444"; /* Red color for food */
-                ctx.strokeStyle = "#ffffff"; /* White border for better visibility */
-                ctx.beginPath();
-                ctx.arc(this.x + scale / 2, this.y + scale / 2, scale / 2, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
+                ctx.fillStyle = "#ff0000";  // Food is red
+                ctx.fillRect(this.x, this.y, scale, scale);  // No border
             };
         }
     </script>
