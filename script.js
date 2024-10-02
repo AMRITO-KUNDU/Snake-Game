@@ -28,7 +28,7 @@ const snake = {
         if (head.x === food.x && head.y === food.y) {
             food.spawn();
         } else {
-            this.body.pop();
+            this.body.pop(); // Remove the last segment if not eating food
         }
 
         // Check for wall collisions
@@ -46,6 +46,7 @@ const snake = {
     reset() {
         this.body = [{ x: 10, y: 10 }];
         this.direction = { x: 1, y: 0 };
+        isGameOver = false;
     }
 };
 
@@ -64,15 +65,16 @@ const food = {
 };
 
 // Draw score
-function drawScore(score) {
-    ctx.fillStyle = '#fff';
-    ctx.font = '20px Arial';
+function drawScore() {
+    ctx.fillStyle = '#000';
+    ctx.font = '20px Comic Sans MS';
     ctx.textAlign = 'left';
     ctx.fillText('Score: ' + (snake.body.length - 1), 10, 30);
 }
 
 // Draw start screen
 function drawStartScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillRect(40, canvas.height / 2 - 60, 240, 120);
     ctx.lineWidth = 5;
@@ -88,6 +90,7 @@ function drawStartScreen() {
 
 // Draw game over screen
 function drawGameOverScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillRect(40, canvas.height / 2 - 60, 240, 120);
     ctx.lineWidth = 5;
@@ -110,7 +113,7 @@ function gameLoop() {
         snake.draw();
         snake.move();
         food.draw();
-        drawScore(snake.body.length - 1);
+        drawScore();
     } else if (!isGameStarted) {
         drawStartScreen();
     } else if (isGameOver) {
@@ -125,7 +128,6 @@ canvas.addEventListener('click', function() {
     if (isGameOver) {
         snake.reset();
         food.spawn();
-        isGameOver = false;
     } else if (!isGameStarted) {
         isGameStarted = true;
         food.spawn();
@@ -145,4 +147,6 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+// Initialize food position
+food.spawn();
 gameLoop();
