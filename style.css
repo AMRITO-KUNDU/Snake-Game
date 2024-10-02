@@ -1,0 +1,13 @@
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #87CEEB; /* Sky blue background */
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+canvas {
+    border: 2px solid black;
+}
