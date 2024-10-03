@@ -8,6 +8,8 @@ canvas.height = 480;
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
+let moveDelay = 100;  // Milliseconds delay between moves
+let lastMoveTime = 0; // Tracks the last time the snake moved
 
 // Snake settings
 const snake = {
@@ -106,12 +108,15 @@ function drawGameOverScreen() {
 }
 
 // Main game loop
-function gameLoop() {
+function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (isGameStarted && !isGameOver) {
+        if (timestamp - lastMoveTime > moveDelay) {
+            snake.move();
+            lastMoveTime = timestamp;
+        }
         snake.draw();
-        snake.move();
         food.draw();
         drawScore();
     } else if (!isGameStarted) {
