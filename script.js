@@ -8,14 +8,14 @@ canvas.height = 480;
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
-let moveDelay = 20;  // Milliseconds delay between moves (slow down the snake)
+let moveDelay = 200;  // Milliseconds delay between moves (adjust speed to make it slower)
 let lastMoveTime = 0; // Tracks the last time the snake moved
 
 // Snake settings
 const snake = {
     body: [{ x: 10, y: 10 }],
     size: 20,
-    direction: { x: 0, y: 0 },  // Start stationary until player presses a key
+    direction: { x: 1, y: 0 },  // Snake will move right on start
     speed: 1,
     draw() {
         ctx.fillStyle = 'green';
@@ -24,7 +24,7 @@ const snake = {
         });
     },
     move() {
-        const head = { x: this.body[0].x + this.direction.x * this.speed, y: this.body[0].y + this.direction.y * this.speed };
+        const head = { x: this.body[0].x + this.direction.x, y: this.body[0].y + this.direction.y };
         this.body.unshift(head);
         
         // Check for collision with food
@@ -48,7 +48,7 @@ const snake = {
     },
     reset() {
         this.body = [{ x: 10, y: 10 }];
-        this.direction = { x: 0, y: 0 };  // Snake stops moving at start
+        this.direction = { x: 1, y: 0 };  // Reset direction to move right
         isGameOver = false;
     }
 };
