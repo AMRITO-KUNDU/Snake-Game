@@ -8,7 +8,7 @@ canvas.height = 480;
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
-let moveDelay = 100;  // Milliseconds delay between moves
+let moveDelay = 10;  // Milliseconds delay between moves
 let lastMoveTime = 0; // Tracks the last time the snake moved
 
 // Snake settings
