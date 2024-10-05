@@ -8,14 +8,15 @@ canvas.height = 480;
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
-let moveDelay = 200; // Milliseconds delay between moves (adjust speed to make it slower)
+let moveDelay = 200;  // Milliseconds delay between moves (slow down the snake)
 let lastMoveTime = 0; // Tracks the last time the snake moved
 
 // Snake settings
 const snake = {
     body: [{ x: 10, y: 10 }],
     size: 20,
-    direction: { x: 1, y: 0 }, // Snake will move right on start
+    direction: { x: 0, y: 0 },  // Start stationary until player presses a key
+    speed: 1,
     draw() {
         ctx.fillStyle = 'green';
         this.body.forEach(segment => {
@@ -23,7 +24,7 @@ const snake = {
         });
     },
     move() {
-        const head = { x: this.body[0].x + this.direction.x, y: this.body[0].y + this.direction.y };
+        const head = { x: this.body[0].x + this.direction.x * this.speed, y: this.body[0].y + this.direction.y * this.speed };
         this.body.unshift(head);
         
         // Check for collision with food
@@ -47,7 +48,7 @@ const snake = {
     },
     reset() {
         this.body = [{ x: 10, y: 10 }];
-        this.direction = { x: 1, y: 0 }; // Reset direction to move right
+        this.direction = { x: 0, y: 0 };  // Snake stops moving at start
         isGameOver = false;
     }
 };
@@ -133,11 +134,9 @@ canvas.addEventListener('click', function() {
     if (isGameOver) {
         snake.reset();
         food.spawn();
-        isGameStarted = true;
-        lastMoveTime = 0; // Reset the move timer
     } else if (!isGameStarted) {
         isGameStarted = true;
-        snake.direction = { x: 1, y: 0 }; // Start moving to the right
+        snake.direction = { x: 1, y: 0 };  // Start moving to the right
         food.spawn();
     }
 });
