@@ -8,8 +8,8 @@ canvas.height = 480;
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
-let moveInterval = 100; // Milliseconds interval between moves
-let gameInterval;
+let moveDelay = 200; // Milliseconds delay between moves (adjust speed to make it slower)
+let lastMoveTime = 0; // Tracks the last time the snake moved
 
 // Snake settings
 const snake = {
@@ -36,14 +36,12 @@ const snake = {
         // Check for wall collisions
         if (head.x < 0 || head.x >= canvas.width / this.size || head.y < 0 || head.y >= canvas.height / this.size) {
             isGameOver = true;
-            clearInterval(gameInterval); // Stop the game when it is over
         }
 
         // Check for self-collision
         for (let i = 1; i < this.body.length; i++) {
             if (head.x === this.body[i].x && head.y === this.body[i].y) {
                 isGameOver = true;
-                clearInterval(gameInterval); // Stop the game when it is over
             }
         }
     },
@@ -51,7 +49,6 @@ const snake = {
         this.body = [{ x: 10, y: 10 }];
         this.direction = { x: 1, y: 0 }; // Reset direction to move right
         isGameOver = false;
-        startGame(); // Restart game
     }
 };
 
@@ -110,24 +107,19 @@ function drawGameOverScreen() {
     ctx.fillText('Click to Restart', canvas.width / 2, canvas.height / 2 + 40);
 }
 
-// Start or reset the game
-function startGame() {
-    if (isGameStarted && !isGameOver) {
-        gameInterval = setInterval(() => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            snake.move();
-            snake.draw();
-            food.draw();
-            drawScore();
-        }, moveInterval);
-    }
-}
-
 // Main game loop
-function gameLoop() {
+function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    if (!isGameStarted) {
+    if (isGameStarted && !isGameOver) {
+        if (timestamp - lastMoveTime > moveDelay) {
+            snake.move();
+            lastMoveTime = timestamp;
+        }
+        snake.draw();
+        food.draw();
+        drawScore();
+    } else if (!isGameStarted) {
         drawStartScreen();
     } else if (isGameOver) {
         drawGameOverScreen();
@@ -140,10 +132,13 @@ function gameLoop() {
 canvas.addEventListener('click', function() {
     if (isGameOver) {
         snake.reset();
+        food.spawn();
+        isGameStarted = true;
+        lastMoveTime = 0; // Reset the move timer
     } else if (!isGameStarted) {
         isGameStarted = true;
+        snake.direction = { x: 1, y: 0 }; // Start moving to the right
         food.spawn();
-        startGame();
     }
 });
 
