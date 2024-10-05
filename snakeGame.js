@@ -5,18 +5,23 @@ const ctx = canvas.getContext('2d');
 canvas.width = 320;
 canvas.height = 480;
 
+// Load the eating sound
+const eatSound = new Audio('eat-sound.mp3');
+
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
 let lastTime = 0; // For time delta calculation
 let moveDelay = 150; // Snake movement delay in milliseconds
+let speedIncrease = 0.95; // Snake speed increases gradually
 let timeSinceLastMove = 0;
 
 // Snake settings
 const snake = {
     body: [{ x: 10, y: 10 }],
     size: 20,
-    direction: { x: 1, y: 0 }, // Snake will move right on start
+    direction: { x: 1, y: 0 }, // Snake moves right on start
+    velocity: 150, // Initial movement delay in milliseconds
     draw() {
         ctx.fillStyle = 'green';
         this.body.forEach(segment => {
@@ -26,10 +31,12 @@ const snake = {
     move() {
         const head = { x: this.body[0].x + this.direction.x, y: this.body[0].y + this.direction.y };
         this.body.unshift(head);
-        
+
         // Check for collision with food
         if (head.x === food.x && head.y === food.y) {
             food.spawn();
+            eatSound.play(); // Play the eating sound
+            this.velocity *= speedIncrease; // Increase the snake's speed
         } else {
             this.body.pop(); // Remove the last segment if not eating food
         }
@@ -49,6 +56,7 @@ const snake = {
     reset() {
         this.body = [{ x: 10, y: 10 }];
         this.direction = { x: 1, y: 0 }; // Reset direction to move right
+        this.velocity = 150; // Reset the speed
         isGameOver = false;
         isGameStarted = true;
         food.spawn();
@@ -65,7 +73,16 @@ const food = {
     },
     draw() {
         ctx.fillStyle = 'red';
-        ctx.fillRect(this.x * snake.size, this.y * snake.size, snake.size, snake.size);
+        // Draw rounded food (circle)
+        ctx.beginPath();
+        ctx.arc(
+            this.x * snake.size + snake.size / 2,
+            this.y * snake.size + snake.size / 2,
+            snake.size / 2,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
     }
 };
 
@@ -114,7 +131,7 @@ function drawGameOverScreen() {
 function updateSnakePosition(deltaTime) {
     timeSinceLastMove += deltaTime;
 
-    if (timeSinceLastMove > moveDelay) {
+    if (timeSinceLastMove > snake.velocity) {
         snake.move();
         timeSinceLastMove = 0;
     }
