@@ -18,7 +18,7 @@ let timeSinceLastMove = 0;
 
 // Snake settings
 const snake = {
-    body: [{ x: 10, y: 10 }* 2],
+    body: [{ x: 10, y: 10 }],
     size: 20,
     direction: { x: 1, y: 0 }, // Snake moves right on start
     velocity: 150, // Initial movement delay in milliseconds
