@@ -8,8 +8,10 @@ canvas.height = 480;
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
-let moveInterval = 100; // Milliseconds interval between moves
-let gameInterval;
+let moveInterval = 150; // Milliseconds interval between moves
+let lastMoveTime = 0;
+let snakeSpeed = 0.2; // Speed in terms of grid cells per frame
+let snakeVelocity = { x: 1, y: 0 }; // Snake moves to the right by default
 
 // Snake settings
 const snake = {
@@ -36,14 +38,12 @@ const snake = {
         // Check for wall collisions
         if (head.x < 0 || head.x >= canvas.width / this.size || head.y < 0 || head.y >= canvas.height / this.size) {
             isGameOver = true;
-            clearInterval(gameInterval); // Stop the game when it is over
         }
 
         // Check for self-collision
         for (let i = 1; i < this.body.length; i++) {
             if (head.x === this.body[i].x && head.y === this.body[i].y) {
                 isGameOver = true;
-                clearInterval(gameInterval); // Stop the game when it is over
             }
         }
     },
@@ -51,7 +51,7 @@ const snake = {
         this.body = [{ x: 10, y: 10 }];
         this.direction = { x: 1, y: 0 }; // Reset direction to move right
         isGameOver = false;
-        startGame(); // Restart game
+        isGameStarted = false;
     }
 };
 
@@ -59,13 +59,16 @@ const snake = {
 const food = {
     x: 5,
     y: 5,
+    size: 20,
     spawn() {
         this.x = Math.floor(Math.random() * (canvas.width / snake.size));
         this.y = Math.floor(Math.random() * (canvas.height / snake.size));
     },
     draw() {
         ctx.fillStyle = 'red';
-        ctx.fillRect(this.x * snake.size, this.y * snake.size, snake.size, snake.size);
+        ctx.beginPath();
+        ctx.arc(this.x * this.size + this.size / 2, this.y * this.size + this.size / 2, this.size / 2, 0, Math.PI * 2);
+        ctx.fill();
     }
 };
 
@@ -110,27 +113,26 @@ function drawGameOverScreen() {
     ctx.fillText('Click to Restart', canvas.width / 2, canvas.height / 2 + 40);
 }
 
-// Start or reset the game
-function startGame() {
-    if (isGameStarted && !isGameOver) {
-        gameInterval = setInterval(() => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            snake.move();
-            snake.draw();
-            food.draw();
-            drawScore();
-        }, moveInterval);
-    }
-}
-
 // Main game loop
-function gameLoop() {
+function gameLoop(currentTime) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (!isGameStarted) {
         drawStartScreen();
     } else if (isGameOver) {
         drawGameOverScreen();
+    } else {
+        // Calculate time difference between frames for smooth movement
+        const deltaTime = currentTime - lastMoveTime;
+
+        if (deltaTime > moveInterval) {
+            lastMoveTime = currentTime;
+            snake.move();
+        }
+
+        snake.draw();
+        food.draw();
+        drawScore();
     }
 
     requestAnimationFrame(gameLoop);
@@ -140,10 +142,10 @@ function gameLoop() {
 canvas.addEventListener('click', function() {
     if (isGameOver) {
         snake.reset();
+        food.spawn();
     } else if (!isGameStarted) {
         isGameStarted = true;
         food.spawn();
-        startGame();
     }
 });
 
@@ -162,4 +164,4 @@ document.addEventListener('keydown', function(event) {
 
 // Initialize food position
 food.spawn();
-gameLoop();
+requestAnimationFrame(gameLoop);
