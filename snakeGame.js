@@ -26,7 +26,7 @@ const snake = {
     move() {
         const head = { x: this.body[0].x + this.direction.x, y: this.body[0].y + this.direction.y };
         this.body.unshift(head);
-        
+
         // Check for collision with food
         if (head.x === food.x && head.y === food.y) {
             food.spawn();
@@ -51,6 +51,7 @@ const snake = {
         this.direction = { x: 1, y: 0 }; // Reset direction to move right
         isGameOver = false;
         isGameStarted = true;
+        timeSinceLastMove = 0; // Reset time since last move
         food.spawn();
     }
 };
@@ -164,6 +165,6 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Initialize food position
+// Initialize food position and start the game loop
 food.spawn();
 gameLoop(0);
