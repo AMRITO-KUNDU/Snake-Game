@@ -12,7 +12,7 @@ const eatSound = new Audio('eat-sound.mp3');
 let isGameOver = false;
 let isGameStarted = false;
 let lastTime = 0; // For time delta calculation
-let moveDelay = 150; // Snake movement delay in milliseconds
+let moveDelay = 180; // Snake movement delay in milliseconds
 let speedIncrease = 0.95; // Snake speed increases gradually
 let timeSinceLastMove = 0;
 
@@ -183,4 +183,5 @@ document.addEventListener('keydown', function(event) {
 
 // Initialize food position
 food.spawn();
+
 gameLoop(0);
