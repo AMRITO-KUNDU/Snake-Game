@@ -5,16 +5,33 @@ const ctx = canvas.getContext('2d');
 canvas.width = 320;
 canvas.height = 480;
 
-// Load the eating sound
-const eatSound = new Audio('eat-sound.mp3');
+const SOUND_EAT = new Audio('../assets/audio/eat-sound.mp3');
+const SOUND_BONUS = new Audio('../assets/audio/bonus-food-sound.wav');
+const SOUND_GAME_OVER = new Audio('../assets/audio/game-over-sound.mp3');
+
+function playSound(audio) {
+    try {
+        audio.currentTime = 0;
+        const maybePromise = audio.play();
+        if (maybePromise && typeof maybePromise.catch === 'function') {
+            maybePromise.catch(() => {});
+        }
+    } catch {
+        // Ignore audio errors (autoplay restrictions, missing codecs, etc.)
+    }
+}
 
 // Game state
 let isGameOver = false;
 let isGameStarted = false;
 let lastTime = 0; // For time delta calculation
-let moveDelay = 150; // Snake movement delay in milliseconds
-let speedIncrease = 0.95; // Snake speed increases gradually
+let hasPlayedGameOverSound = false;
+const speedIncrease = 0.95; // Snake speed increases gradually
 let timeSinceLastMove = 0;
+
+// Pointer swipe tracking (touch + mouse/pen)
+let pointerStart = null;
+const swipeThresholdPx = 20;
 
 // Snake settings
 const snake = {
@@ -35,7 +52,8 @@ const snake = {
         // Check for collision with food
         if (head.x === food.x && head.y === food.y) {
             food.spawn();
-            eatSound.play(); // Play the eating sound
+            const nextScore = this.body.length - 1;
+            playSound(nextScore > 0 && nextScore % 5 === 0 ? SOUND_BONUS : SOUND_EAT);
             this.velocity *= speedIncrease; // Increase the snake's speed
         } else {
             this.body.pop(); // Remove the last segment if not eating food
@@ -58,6 +76,7 @@ const snake = {
         this.direction = { x: 1, y: 0 }; // Reset direction to move right
         this.velocity = 150; // Reset the speed
         isGameOver = false;
+        hasPlayedGameOverSound = false;
         isGameStarted = true;
         food.spawn();
     }
@@ -107,7 +126,7 @@ function drawStartScreen() {
     ctx.font = '30px Comic Sans MS';
     ctx.textAlign = 'center';
     ctx.fillText('Snake Game', canvas.width / 2, canvas.height / 2 - 20);
-    ctx.fillText('Click to Start', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Tap/Click to Start', canvas.width / 2, canvas.height / 2 + 20);
 }
 
 // Draw game over screen
@@ -124,7 +143,7 @@ function drawGameOverScreen() {
     ctx.textAlign = 'center';
     ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
     ctx.fillText('Score: ' + (snake.body.length - 1), canvas.width / 2, canvas.height / 2 + 10);
-    ctx.fillText('Click to Restart', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Tap/Click to Restart', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 // Update snake's position based on the time passed
@@ -147,6 +166,10 @@ function gameLoop(timestamp) {
     if (!isGameStarted) {
         drawStartScreen();
     } else if (isGameOver) {
+        if (!hasPlayedGameOverSound) {
+            hasPlayedGameOverSound = true;
+            playSound(SOUND_GAME_OVER);
+        }
         drawGameOverScreen();
     } else {
         updateSnakePosition(deltaTime);
@@ -158,26 +181,62 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// Start or reset the game on click
-canvas.addEventListener('click', function() {
+function trySetDirection(nextDirection) {
+    // Prevent reversing into itself
+    if (nextDirection.x !== 0 && snake.direction.x === 0) {
+        snake.direction = nextDirection;
+    } else if (nextDirection.y !== 0 && snake.direction.y === 0) {
+        snake.direction = nextDirection;
+    }
+}
+
+function handleStartOrReset() {
     if (isGameOver) {
         snake.reset();
     } else if (!isGameStarted) {
         isGameStarted = true;
+        hasPlayedGameOverSound = false;
         food.spawn();
     }
+}
+
+// Start/reset + swipe using Pointer Events (works for mouse and touch)
+canvas.addEventListener('pointerdown', function (event) {
+    event.preventDefault();
+    handleStartOrReset();
+    pointerStart = { x: event.clientX, y: event.clientY };
+});
+
+canvas.addEventListener('pointerup', function (event) {
+    if (!pointerStart) return;
+
+    const dx = event.clientX - pointerStart.x;
+    const dy = event.clientY - pointerStart.y;
+    pointerStart = null;
+
+    if (Math.abs(dx) < swipeThresholdPx && Math.abs(dy) < swipeThresholdPx) return;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        trySetDirection({ x: dx > 0 ? 1 : -1, y: 0 });
+    } else {
+        trySetDirection({ x: 0, y: dy > 0 ? 1 : -1 });
+    }
+});
+
+canvas.addEventListener('pointercancel', function () {
+    pointerStart = null;
 });
 
 // Key listener for controlling the snake
 document.addEventListener('keydown', function(event) {
-    if (event.key === 'ArrowUp' && snake.direction.y === 0) {
-        snake.direction = { x: 0, y: -1 };
-    } else if (event.key === 'ArrowDown' && snake.direction.y === 0) {
-        snake.direction = { x: 0, y: 1 };
-    } else if (event.key === 'ArrowLeft' && snake.direction.x === 0) {
-        snake.direction = { x: -1, y: 0 };
-    } else if (event.key === 'ArrowRight' && snake.direction.x === 0) {
-        snake.direction = { x: 1, y: 0 };
+    if (event.key === 'ArrowUp') {
+        trySetDirection({ x: 0, y: -1 });
+    } else if (event.key === 'ArrowDown') {
+        trySetDirection({ x: 0, y: 1 });
+    } else if (event.key === 'ArrowLeft') {
+        trySetDirection({ x: -1, y: 0 });
+    } else if (event.key === 'ArrowRight') {
+        trySetDirection({ x: 1, y: 0 });
     }
 });
 

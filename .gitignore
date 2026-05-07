@@ -1,0 +1,23 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories (if you add tooling later)
+node_modules/
+
+# Build output (if you add bundling later)
+dist/
+build/
+out/
+
