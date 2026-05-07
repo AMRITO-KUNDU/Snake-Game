@@ -126,7 +126,7 @@ function drawStartScreen() {
     ctx.font = '30px Comic Sans MS';
     ctx.textAlign = 'center';
     ctx.fillText('Snake Game', canvas.width / 2, canvas.height / 2 - 20);
-    ctx.fillText('Tap/Click to Start', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Click to Start', canvas.width / 2, canvas.height / 2 + 20);
 }
 
 // Draw game over screen
@@ -143,7 +143,7 @@ function drawGameOverScreen() {
     ctx.textAlign = 'center';
     ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
     ctx.fillText('Score: ' + (snake.body.length - 1), canvas.width / 2, canvas.height / 2 + 10);
-    ctx.fillText('Tap/Click to Restart', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Click to Restart', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 // Update snake's position based on the time passed

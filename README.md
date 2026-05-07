@@ -11,7 +11,7 @@ A simple Snake game built with HTML Canvas and vanilla JavaScript.
 
 - Desktop: Arrow keys to move.
 - Mobile / Touch: Swipe on the game area (canvas) to change direction.
-- Start / Restart: Tap/click the game area when prompted.
+- Start / Restart: Click the game area when prompted.
 
 ## Files
 
@@ -19,4 +19,3 @@ A simple Snake game built with HTML Canvas and vanilla JavaScript.
 - `src/styles.css` — basic styling
 - `src/snakeGame.js` — game logic and input handling
 - `assets/audio/*` — audio assets
-
