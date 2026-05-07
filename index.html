@@ -4,88 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snake Game</title>
-    <meta name="description" content="A modern, polished Snake game built with HTML Canvas, CSS and JavaScript." />
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <main class="app" aria-label="Snake Game">
-        <header class="topbar">
-            <div class="brand">
-                <div class="brand__title">Snake</div>
-                <div class="brand__subtitle">Classic arcade, modern polish</div>
-            </div>
-
-            <div class="hud" role="status" aria-live="polite">
-                <div class="hud__item"><span class="hud__label">Score</span><span id="scoreValue" class="hud__value">0</span></div>
-                <div class="hud__item"><span class="hud__label">High</span><span id="highScoreValue" class="hud__value">0</span></div>
-                <div class="hud__item"><span class="hud__label">Speed</span><span id="speedValue" class="hud__value">1.0×</span></div>
-            </div>
-        </header>
-
-        <section class="stage" aria-label="Game">
-            <canvas id="snakeGame" width="320" height="480"></canvas>
-            <div id="overlay" class="overlay" hidden>
-                <div class="overlay__card" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
-                    <h1 id="overlayTitle" class="overlay__title">Snake</h1>
-                    <p id="overlayBody" class="overlay__body">Press Space to start. Arrow keys / WASD to move.</p>
-                    <div class="overlay__actions">
-                        <button id="primaryAction" class="btn btn--primary" type="button">Start</button>
-                        <button id="secondaryAction" class="btn" type="button">Settings</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="panel" aria-label="Controls and settings">
-            <div class="panel__row">
-                <button id="startBtn" class="btn btn--primary" type="button">Start</button>
-                <button id="pauseBtn" class="btn" type="button" disabled>Pause</button>
-                <button id="restartBtn" class="btn" type="button" disabled>Restart</button>
-            </div>
-
-            <div class="panel__row panel__row--settings">
-                <label class="field">
-                    <span class="field__label">Difficulty</span>
-                    <select id="difficultySelect" class="field__control" aria-label="Difficulty">
-                        <option value="easy">Easy</option>
-                        <option value="normal" selected>Normal</option>
-                        <option value="hard">Hard</option>
-                    </select>
-                </label>
-
-                <label class="field field--toggle">
-                    <span class="field__label">Wrap walls</span>
-                    <input id="wrapToggle" class="field__toggle" type="checkbox" />
-                </label>
-
-                <label class="field field--toggle">
-                    <span class="field__label">Sound</span>
-                    <input id="soundToggle" class="field__toggle" type="checkbox" checked />
-                </label>
-
-                <label class="field">
-                    <span class="field__label">Volume</span>
-                    <input id="volumeRange" class="field__control" type="range" min="0" max="1" step="0.05" value="0.7" />
-                </label>
-            </div>
-
-            <div class="panel__help">
-                <div class="kbd">
-                    <span class="kbd__key">↑</span><span class="kbd__key">↓</span><span class="kbd__key">←</span><span class="kbd__key">→</span>
-                    <span class="kbd__hint">Move</span>
-                </div>
-                <div class="kbd">
-                    <span class="kbd__key">Space</span>
-                    <span class="kbd__hint">Start/Pause</span>
-                </div>
-                <div class="kbd">
-                    <span class="kbd__key">R</span>
-                    <span class="kbd__hint">Restart</span>
-                </div>
-            </div>
-        </section>
-    </main>
-
+    <canvas id="snakeGame"></canvas>
     <script src="snakeGame.js"></script>
 </body>
 </html>
